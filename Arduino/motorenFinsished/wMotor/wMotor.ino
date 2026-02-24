@@ -1,6 +1,6 @@
 // Beispiel: DPS (D5 = RPWM, D6 = LPWM), R_EN & L_EN dauerhaft HIGH (5V)
-const int rpwmPin = 5;   // PWM für "vorwärts"
-const int lpwmPin = 6;   // PWM für "rückwärts"
+const int rpwmPin = 2;   // PWM für "vorwärts"
+const int lpwmPin = 3;   // PWM für "rückwärts"
 
 void setup() {
   pinMode(rpwmPin, OUTPUT);

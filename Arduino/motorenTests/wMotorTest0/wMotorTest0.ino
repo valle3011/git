@@ -1,6 +1,6 @@
 // Beispiel: DPS (D5 = RPWM, D6 = LPWM), R_EN & L_EN dauerhaft HIGH (5V)
-const int rpwmPin = 5;   // PWM für "vorwärts"
-const int lpwmPin = 6;   // PWM für "rückwärts"
+const int rpwmPin = 2;   // PWM für "vorwärts"
+const int lpwmPin = 3;   // PWM für "rückwärts"
 
 void setup() {
   pinMode(rpwmPin, OUTPUT);
@@ -18,5 +18,12 @@ void loop() {
 
   // Motor anhalten
   analogWrite(rpwmPin, 0);
+  delay(3000);
+
+  analogWrite(rpwmPin, 0);
+  analogWrite(lpwmPin, 255);
+  delay(800);
+
+  analogWrite(lpwmPin, 0);
   delay(3000);
 }

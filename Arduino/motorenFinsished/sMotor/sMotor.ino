@@ -3,7 +3,7 @@
 Servo meinServo; // Servo-Objekt erstellen
 
 void setup() {
-  meinServo.attach(4); // Pin 9 mit Servo verbinden
+  meinServo.attach(8); // Pin 9 mit Servo verbinden
 }
 
 void loop() {

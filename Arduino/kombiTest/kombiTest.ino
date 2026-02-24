@@ -1,4 +1,12 @@
-// Pins
+#include <Servo.h>
+
+Servo bremse;
+const int bremsePin = 4;
+
+const int potPin = A0;
+
+const int antribPin = 9;
+
 int TRIG_L = 7;
 int ECHO_L = 6;
 
@@ -28,6 +36,13 @@ String bewertung(long abstand) {
 }
 
 void setup() {
+  // put your setup code here, to run once:
+  pinMode(antribPin, OUTPUT);
+  analogWrite(antribPin, 60);
+
+  bremse.attach(bremsePin);
+  bremse.write(0);
+
   pinMode(TRIG_L, OUTPUT);
   pinMode(ECHO_L, INPUT);
 
@@ -38,14 +53,13 @@ void setup() {
   pinMode(ECHO_H, INPUT);
 
   Serial.begin(9600);
-  Serial.println("=== Einparkassistent gestartet ===");
+
 }
 
 void loop() {
+  // put your main code here, to run repeatedly:
   long links  = messen(TRIG_L, ECHO_L);
-  delay(50);
   long rechts = messen(TRIG_R, ECHO_R);
-  delay(50);
   long hinten = messen(TRIG_H, ECHO_H);
 
   Serial.println("-----------------------------");
@@ -65,5 +79,28 @@ void loop() {
   Serial.print(" cm  -> ");
   Serial.println(bewertung(hinten));
 
-  delay(700);
+  int potValue = analogRead(potPin);
+  Serial.println(potValue);
+
+  if (millis() < 2000) {
+    analogWrite(antribPin, 120);
+  }
+  else if (millis() <= 4000) {
+    analogWrite(antribPin, 60);
+    bremse.write(180);
+  }
+  else if (millis() <= 6000) {
+    bremse.write(0);
+    analogWrite(antribPin, 240);
+  }
+  else if (millis() <= 8000) {
+    analogWrite(antribPin, 60);
+    bremse.write(180);
+  }
+  else if (millis() <= 10000) {
+    bremse.write(0);
+    analogWrite(antribPin, 580);
+  }
+
+
 }

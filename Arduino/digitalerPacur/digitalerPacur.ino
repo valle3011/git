@@ -7,6 +7,11 @@ const int antribPin = 9;
 const int rpwmPin = 5;
 const int lpwmPin = 6;
 
+int entscheidung = 0;
+
+const int lenkPin = A0;
+int potValue = 0;
+
 void setup() {
   // put your setup code here, to run once:
   bremse.attach(bremsePin);
@@ -24,7 +29,30 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  switch (entscheidung) {
+    case 1:
+      antribFahren();
+      break;
 
+    case 2:
+      bremseAn();
+      break;
+
+    case 3:
+      bremseAus();
+      break;
+
+    default:
+      bremseAn();
+      break;
+  }
+
+  int lenkValue = analogRead(lenkPin); // 455 mitte, nach rechts kleiner, nach links größer
+  if () {
+
+  } else if () {
+
+  }
 }
 
 void antribFahren(int speed) {
@@ -52,7 +80,7 @@ void lenkRechts() {
     aktiv = true;
   }
 
-  if (aktiv && millis() - startTime >= 800) {
+  if (aktiv && millis() - startTime >= 800) { //800 als Variable für dynamisches Lenken
     analogWrite(rpwmPin, 0);
     Serial.println("Ende Rechts");
     aktiv = false;
@@ -71,7 +99,7 @@ void lenkLinks() {
     aktiv = true;
   }
 
-  if (aktiv && millis() - startTime >= 800) {
+  if (aktiv && millis() - startTime >= 800) { //800 als Variable für dynamisches Lenken
     analogWrite(lpwmPin, 0);
     Serial.println("Ende Links");
     aktiv = false;
