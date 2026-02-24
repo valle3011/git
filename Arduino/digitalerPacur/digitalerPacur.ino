@@ -7,7 +7,7 @@ const int antribPin = 9;
 const int rpwmPin = 5;
 const int lpwmPin = 6;
 
-int entscheidung = 0;
+int entscheidung = 0; // ABC
 
 const int lenkPin = A0;
 int potValue = 0;
