@@ -38,14 +38,11 @@ void setup() {
   pinMode(ECHO_H, INPUT);
 
   Serial.begin(9600);
-  Serial.println("=== Einparkassistent gestartet ===");
 }
 
 void loop() {
   long links  = messen(TRIG_L, ECHO_L);
-  delay(50);
   long rechts = messen(TRIG_R, ECHO_R);
-  delay(50);
   long hinten = messen(TRIG_H, ECHO_H);
 
   Serial.println("-----------------------------");
