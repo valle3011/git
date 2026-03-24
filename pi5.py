@@ -3,6 +3,8 @@ import serial
 import time
 import cv2
 import numpy as np
+from mpu6050 import mpu6050
+import hailo_platform
 
 class MotorController:
     def __init__(self, port):
@@ -50,12 +52,34 @@ class Camera:
         self.cap.release()
 
 
-# VISION SYSTEM
+class IMU:
+    def __init__(self, address=0x68):
+        self.sensor = mpu6050(address)
+
+    def get_data(self):
+        accel = self.sensor.get_accel_data()
+        gyro = self.sensor.get_gyro_data()
+
+        return {
+            "ax": accel['x'],
+            "ay": accel['y'],
+            "az": accel['z'],
+            "gx": gyro['x'],
+            "gy": gyro['y'],
+            "gz": gyro['z']
+        }
+class HailoDetector:
+    def __init__(self, hef_path):
+        self.device = hailo_platform.Device()
+        self.network_group = self.device.configure(hef_path)
+
+    def detect(self, frame):
+        # preprocess frame here
+        # run inference using hailo API
+        # return boxes like before
+        return []
 
 class VisionSystem:
-    def __init__(self):
-        self.model = YOLO("yolov8n.pt")
-        self.frame_width = 640
 
     #Red Light Detection 
     def detect_red_light(self, frame):
@@ -75,16 +99,19 @@ class VisionSystem:
         return red_pixels > 2000  # tune threshold
 
     #YOLO Obstacle Detection
+  
+    def __init__(self):
+        self.detector = HailoDetector("yolov8n.hef")
+        self.frame_width = 640
+
     def detect_obstacles(self, frame):
-        results = self.model(frame, imgsz=320, conf=0.5, verbose=False)
+        results = self.detector.detect(frame)
 
         obstacles = []
-        for r in results:
-            for box in r.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                area = (x2 - x1) * (y2 - y1)
-                cx = (x1 + x2) // 2
-                obstacles.append((cx, area))
+        for (x1, y1, x2, y2) in results:
+            area = (x2 - x1) * (y2 - y1)
+            cx = (x1 + x2) // 2
+            obstacles.append((cx, area))
 
         return obstacles
 
@@ -93,10 +120,11 @@ class VisionSystem:
 # DECISION SYSTEM
 
 class RobotController:
-    def __init__(self, motor, camera, vision):
+    def __init__(self, motor, camera, vision, imu):
         self.motor = motor
         self.camera = camera
         self.vision = vision
+        self.imu = imu
 
         self.FRAME_LEFT = 640 * 0.4
         self.FRAME_RIGHT = 640 * 0.6
@@ -109,11 +137,20 @@ class RobotController:
                 if frame is None:
                     continue
 
+                imu_data = self.imu.get_data()
+
+            # Example: detect tilt / collision
+                if abs(imu_data["ax"]) > 8 or abs(imu_data["ay"]) > 8:
+                    print("Tilt/Collision detected → STOP")
+                    self.motor.stop()
+                    continue
+
                 #Red Light Priority
                 if self.vision.detect_red_light(frame):
                     print("Red Light Detected → STOP")
                     self.motor.stop()
                     continue
+
 
                 #YOLO Obstacles
                 obstacles = self.vision.detect_obstacles(frame)
@@ -151,6 +188,7 @@ if __name__ == "__main__":
 
     camera = Camera()
     vision = VisionSystem()
+    imu = IMU()
 
-    robot = RobotController(motor, camera, vision)
+    robot = RobotController(motor, camera, vision, imu)
     robot.run()
