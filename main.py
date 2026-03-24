@@ -1,6 +1,7 @@
 import socket
 import serial
 import time
+from picamera2 import Picamera2
 import cv2
 import numpy as np
 import glob
@@ -118,30 +119,26 @@ class MotorController:
 # =========================
 
 class Camera:
-    def __init__(self, index=0, width=640, height=480):
-        debug("Initializing camera...")
-        self.cap = cv2.VideoCapture(index)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-        if not self.cap.isOpened():
-            raise RuntimeError("Camera could not be opened")
-
-        debug("Camera OK")
+    def __init__(self, width=640, height=480):
+        debug("Initializing Picamera2...")
+        self.picam2 = Picamera2()
+        config = self.picam2.create_preview_configuration(
+            main={"size": (width, height), "format": "RGB888"}
+        )
+        self.picam2.configure(config)
+        self.picam2.start()
+        time.sleep(2)
+        debug("Picamera2 OK")
 
     def get_frame(self):
-        ret, frame = self.cap.read()
-        if not ret:
+        frame = self.picam2.capture_array()
+        if frame is None:
             return None
-        return frame
+        return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
     def release(self):
-        try:
-            self.cap.release()
-            debug("Camera released")
-        except Exception as e:
-            debug(f"Camera release warning: {e}")
-
+        self.picam2.stop()
+        debug("Camera released")
 
 # =========================
 # IMU
