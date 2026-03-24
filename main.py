@@ -396,7 +396,7 @@ if __name__ == "__main__":
     debug("PROGRAM STARTED")
 
     motor = MotorController(ARDUINO_PORT, ARDUINO_BAUD)
-    camera = Camera(CAMERA_INDEX, CAMERA_WIDTH, CAMERA_HEIGHT)
+    camera = Camera()
     vision = VisionSystem()
     imu = IMU()
     lidar = LidarReceiver(LIDAR_LISTEN_IP, LIDAR_PORT)
