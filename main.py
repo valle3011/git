@@ -260,7 +260,7 @@ class RobotController:
 
 if __name__ == "__main__":
     motor = MotorController(
-        "/dev/serial/by-id/usb-Arduino_UNO_WiFi_R4_CMSIS-DAP_F412FA6FED58-if01"
+        "/dev/ttyACM0"
     )
 
     camera = Camera()
