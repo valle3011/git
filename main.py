@@ -342,41 +342,41 @@ class RobotController:
                 # Camera/Hailo obstacles
                 obstacles = self.vision.detect_obstacles(frame)
 
-                if obstacles:
-                    cx, area = max(obstacles, key=lambda x: x[1])
-                    debug(f"Biggest obstacle: cx={cx}, area={area}")
+                if front_dist < self.STOP_MM:
+                    debug("Front blocked")
 
-                    if area > self.AREA_THRESHOLD:
-                        debug("Large obstacle -> STOP")
-                        self.motor.stop()
-
-                    elif cx < self.FRAME_LEFT:
-                        if right_dist > self.SIDE_FREE_MM:
-                            debug("Obstacle left -> turn right")
-                            self.motor.turn_right()
-                        else:
-                            debug("Obstacle left but right blocked -> STOP")
-                            self.motor.stop()
-
-                    elif cx > self.FRAME_RIGHT:
-                        if left_dist > self.SIDE_FREE_MM:
-                            debug("Obstacle right -> turn left")
-                            self.motor.turn_left()
-                        else:
-                            debug("Obstacle right but left blocked -> STOP")
-                            self.motor.stop()
-
+                    if left_dist > right_dist:
+                        debug("More space left → LEFT")
+                        self.motor.turn_left()
+                    elif right_dist > left_dist:
+                        debug("More space right → RIGHT")
+                        self.motor.turn_right()
                     else:
-                        debug("Obstacle center -> STOP")
+                        debug("No clear direction → STOP")
                         self.motor.stop()
 
                 else:
-                    if front_dist >= self.STOP_MM:
-                        debug("Path clear -> FORWARD")
-                        self.motor.move_forward()
+                    if obstacles:
+                        cx, area = max(obstacles, key=lambda x: x[1])
+
+                        if cx < self.FRAME_LEFT:
+                            debug("Obstacle left → RIGHT")
+                            self.motor.turn_right()
+
+                        elif cx > self.FRAME_RIGHT:
+                            debug("Obstacle right → LEFT")
+                            self.motor.turn_left()
+
+                        else:
+                            debug("Obstacle center → STOP")
+                            self.motor.stop()
+
                     else:
-                        debug("LiDAR says blocked -> STOP")
-                        self.motor.stop()
+                        debug("Clear → FORWARD")
+                        self.motor.move_forward()
+
+                
+                    
 
                 time.sleep(0.05)
 
