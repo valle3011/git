@@ -319,7 +319,7 @@ class RobotController:
                     continue
 
                 # IMU priority
-                if abs(imu_data["ax"]) > 8 or abs(imu_data["ay"]) > 8:
+                if abs(imu_data["ax"]) > 12 or abs(imu_data["ay"]) > 12:
                     debug("Tilt/Collision detected -> STOP")
                     self.motor.stop()
                     time.sleep(0.05)
@@ -342,41 +342,32 @@ class RobotController:
                 # Camera/Hailo obstacles
                 obstacles = self.vision.detect_obstacles(frame)
 
-                if front_dist < self.STOP_MM:
-                    debug("Front blocked")
+                if obstacles:
+                    cx, area = max(obstacles, key=lambda x: x[1])
+                    debug(f"Biggest obstacle: cx={cx}, area={area}")
 
-                    if left_dist > right_dist:
-                        debug("More space left → LEFT")
-                        self.motor.turn_left()
-                    elif right_dist > left_dist:
-                        debug("More space right → RIGHT")
-                        self.motor.turn_right()
+                    if area > self.AREA_THRESHOLD:
+                        debug("Large obstacle -> STOP")
+                        self.motor.stop()
+
+                    elif cx < self.FRAME_LEFT:
+                            self.motor.turn_right()
+                        
+                    elif cx > self.FRAME_RIGHT:
+                            self.motor.turn_left()
+                       
+
                     else:
-                        debug("No clear direction → STOP")
+                        debug("Obstacle center -> STOP")
                         self.motor.stop()
 
                 else:
-                    if obstacles:
-                        cx, area = max(obstacles, key=lambda x: x[1])
-
-                        if cx < self.FRAME_LEFT:
-                            debug("Obstacle left → RIGHT")
-                            self.motor.turn_right()
-
-                        elif cx > self.FRAME_RIGHT:
-                            debug("Obstacle right → LEFT")
-                            self.motor.turn_left()
-
-                        else:
-                            debug("Obstacle center → STOP")
-                            self.motor.stop()
-
-                    else:
-                        debug("Clear → FORWARD")
+                    if front_dist >= self.STOP_MM:
+                        debug("Path clear -> FORWARD")
                         self.motor.move_forward()
-
-                
-                    
+                    else:
+                        debug("LiDAR says blocked -> STOP")
+                        self.motor.stop()
 
                 time.sleep(0.05)
 
