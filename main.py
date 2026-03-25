@@ -317,18 +317,41 @@ class RobotController:
                     self.motor.stop()
                     time.sleep(0.05)
                     continue
-
+                
                 # IMU priority
                 if abs(imu_data["ax"]) > 12 or abs(imu_data["ay"]) > 12:
                     debug("Tilt/Collision detected -> STOP")
                     self.motor.stop()
                     time.sleep(0.05)
                     continue
-
-                # LiDAR front stop priority
+                
+                # LiDAR front blocked -> choose direction
                 if front_dist < self.STOP_MM:
-                    debug("LiDAR front obstacle -> STOP")
-                    self.motor.stop()
+                    debug(f"Front blocked: F={front_dist}, L={left_dist}, R={right_dist}")
+                
+                    if left_dist > right_dist and left_dist > self.SIDE_FREE_MM:
+                        debug("More space left -> LEFT")
+                        self.motor.turn_left()
+                    elif right_dist > left_dist and right_dist > self.SIDE_FREE_MM:
+                        debug("More space right -> RIGHT")
+                        self.motor.turn_right()
+                    else:
+                        debug("No safe side -> STOP")
+                        self.motor.stop()
+                
+                    time.sleep(0.05)
+                    continue
+                
+                # Optional side correction
+                if left_dist < self.STOP_MM and right_dist > left_dist:
+                    debug(f"Too close on left: L={left_dist}, R={right_dist} -> RIGHT")
+                    self.motor.turn_right()
+                    time.sleep(0.05)
+                    continue
+                
+                if right_dist < self.STOP_MM and left_dist > right_dist:
+                    debug(f"Too close on right: L={left_dist}, R={right_dist} -> LEFT")
+                    self.motor.turn_left()
                     time.sleep(0.05)
                     continue
 
@@ -351,9 +374,15 @@ class RobotController:
                         self.motor.stop()
 
                     elif cx < self.FRAME_LEFT:
+                        if right_dist > self.SIDE_FREE_MM:
+                            debug("Obstacle left -> turn right")
                             self.motor.turn_right()
-                        
+                        else:
+                            debug("Obstacle left but right blocked -> STOP")
+                            self.motor.stop()
+
                     elif cx > self.FRAME_RIGHT:
+                        
                             self.motor.turn_left()
                        
 
