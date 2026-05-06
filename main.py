@@ -1,3 +1,4 @@
+from ultralytics import YOLO
 import socket
 import serial
 import time
@@ -12,7 +13,7 @@ from mpu6050 import mpu6050
 # SETTINGS
 # =========================
 
-# Change this if you want a fixed port, for example "/dev/ttyACM0"
+
 # If None, the code will try to auto-detect the Arduino.
 ARDUINO_PORT = None
 
@@ -22,8 +23,7 @@ ARDUINO_BAUD = 115200
 LIDAR_LISTEN_IP = "0.0.0.0"
 LIDAR_PORT = 5005
 
-# Hailo model path
-HEF_PATH = "/usr/share/hailo-models/yolov8s_h8l.hef"
+
 
 # Camera
 CAMERA_INDEX = 0
@@ -215,26 +215,38 @@ class LidarReceiver:
 
 
 # =========================
-# HAILO PLACEHOLDER
+# YOLO DETECTOR
 # =========================
 
-class HailoDetector:
-    def __init__(self, hef_path=HEF_PATH):
-        self.hef_path = hef_path
-
-        try:
-            with open(self.hef_path, "rb") as f:
-                f.read(1)
-            debug(f"Hailo HEF found: {self.hef_path}")
-        except Exception as e:
-            debug(f"Hailo HEF error: {e}")
-
-        debug("Hailo detector currently running in placeholder mode")
+class YoloDetector:
+    def __init__(self, model_path="yolov8n.onnx"):
+        debug("Loading YOLO model...")
+        self.model = YOLO(model_path)
+        debug("YOLO ready")
 
     def detect(self, frame):
-        # Placeholder:
-        # Replace later with real Hailo inference.
-        return []
+        results = self.model(frame, imgsz=320, conf=0.45, verbose=False)
+
+        boxes = []
+
+        for r in results:
+            for box in r.boxes:
+                cls = int(box.cls[0])
+                name = self.model.names[cls]
+
+                # Nur Hindernisse / Personen erkennen
+                if name not in ["person", "car", "bicycle", "motorcycle", "truck", "bus"]:
+                    continue
+
+                x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
+                boxes.append((x1, y1, x2, y2))
+
+                # Optional: Box ins Bild zeichnen
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(frame, name, (x1, y1 - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+        return boxes
 
 
 # =========================
@@ -244,7 +256,7 @@ class HailoDetector:
 class VisionSystem:
     def __init__(self):
         debug("Initializing vision system...")
-        self.detector = HailoDetector(HEF_PATH)
+        self.detector = YoloDetector("yolov8vn.onnx")
         self.frame_width = CAMERA_WIDTH
         debug("Vision system OK")
 
@@ -303,8 +315,13 @@ class RobotController:
                 debug("=== LOOP START ===")
 
                 frame = self.camera.get_frame()
+                
+                cv2.imshow("Robot Camera", frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+                
                 if frame is None:
-                    debug("Camera frame is None")
+                    debug("Camera is None")
                     time.sleep(0.05)
                     continue
 
@@ -406,6 +423,7 @@ class RobotController:
             debug("Cleaning up...")
             self.motor.cleanup()
             self.camera.release()
+            cv2.destroyAllWindows()
 
 
 # =========================
