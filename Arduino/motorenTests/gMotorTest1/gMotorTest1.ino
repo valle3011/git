@@ -1,10 +1,5 @@
-// Arduino -> VEVOR ESC Throttle (Testprogramm)
-// Hardware: D9 -> (Knoten) -> ESC Grau (Signal) + Kondensator PLUS
-//           GND -> ESC Schwarz + Kondensator MINUS (Streifen)
-// ESC Rot (+5V) NICHT anschließen
-
-const int outPin = 6;     // PWM Pin zum ESC (D9)
-const int pwmStop = 60;   // "kein Gas" (ggf. anpassen)
+const int outPin = 9;     // PWM Pin zum ESC (D9)
+const int pwmStop = 60;   // "kein Gas"
 const int pwmLow  = 90;   // kleines Gas
 const int pwmMed  = 180;  // mittleres Gas
 
